@@ -14,9 +14,9 @@ Unified API for isolated command execution across multiple backends. Same interf
 
 ```xml
 <dependency>
-    <groupId>org.springaicommunity</groupId>
+    <groupId>io.github.markpollack</groupId>
     <artifactId>agent-sandbox-core</artifactId>
-    <version>0.9.1</version>
+    <version>0.9.2</version>
 </dependency>
 ```
 
@@ -38,8 +38,12 @@ try (Sandbox sandbox = LocalSandbox.builder()
 ## Documentation
 
 Full API reference, all backends, file operations, and customizers:
-https://springaicommunity.mintlify.app/projects/incubating/agent-sandbox
+https://lab.pollack.ai/projects/agent-sandbox
 
-## License
+## Licensing
 
-Apache License 2.0
+This project originated from earlier Apache-licensed work in the Spring AI Community.
+
+Beginning with version 0.9.2, new development is licensed under the Business Source License 1.1 (BSL).
+
+Historical Apache-licensed portions remain available under their original terms. See [LICENSE](LICENSE) and [LICENSE-APACHE.txt](LICENSE-APACHE.txt) for details.

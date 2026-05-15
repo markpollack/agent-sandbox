@@ -6,7 +6,7 @@
         </encoder>
     </appender>
 
-    <logger name="org.springaicommunity.sandbox" level="DEBUG"/>
+    <logger name="io.github.markpollack.sandbox" level="DEBUG"/>
 
     <root level="INFO">
         <appender-ref ref="CONSOLE"/>

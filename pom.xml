@@ -4,42 +4,34 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <parent>
-        <groupId>org.springaicommunity</groupId>
-        <artifactId>spring-ai-community-parent</artifactId>
-        <version>1.0.1</version>
-        <relativePath/>
-    </parent>
-
+    <groupId>io.github.markpollack</groupId>
     <artifactId>agent-sandbox-parent</artifactId>
-    <version>0.9.1-SNAPSHOT</version>
+    <version>0.9.2-SNAPSHOT</version>
     <packaging>pom</packaging>
 
-    <name>Agent Sandbox Parent</name>
+    <name>Agent Sandbox</name>
     <description>Agent Sandbox - Process Execution and Workspace Management for AI Agents</description>
-    <url>https://github.com/spring-ai-community/agent-sandbox</url>
+    <url>https://github.com/markpollack/agent-sandbox</url>
 
     <licenses>
         <license>
-            <name>Apache License, Version 2.0</name>
-            <url>https://www.apache.org/licenses/LICENSE-2.0</url>
+            <name>Business Source License 1.1</name>
+            <url>https://github.com/markpollack/agent-sandbox/blob/main/LICENSE</url>
+            <distribution>repo</distribution>
         </license>
     </licenses>
 
     <scm>
-        <url>https://github.com/spring-ai-community/agent-sandbox</url>
-        <connection>scm:git:git://github.com/spring-ai-community/agent-sandbox.git</connection>
-        <developerConnection>scm:git:git@github.com:spring-ai-community/agent-sandbox.git</developerConnection>
+        <connection>scm:git:git://github.com/markpollack/agent-sandbox.git</connection>
+        <developerConnection>scm:git:ssh://github.com:markpollack/agent-sandbox.git</developerConnection>
+        <url>https://github.com/markpollack/agent-sandbox</url>
     </scm>
 
     <developers>
         <developer>
             <id>markpollack</id>
             <name>Mark Pollack</name>
-            <email>mark@springframework.org</email>
-            <roles>
-                <role>lead</role>
-            </roles>
+            <email>mark.pollack@gmail.com</email>
         </developer>
     </developers>
 
@@ -47,23 +39,15 @@
         <module>agent-sandbox-core</module>
         <module>agent-sandbox-docker</module>
         <module>agent-sandbox-e2b</module>
-        <!-- <module>agent-sandbox-bom</module> -->
     </modules>
 
-    <profiles>
-        <!-- Release profile inherited from community-parent -->
-        <profile>
-            <id>docker</id>
-            <activation>
-                <property>
-                    <name>sandbox.infrastructure.test</name>
-                    <value>true</value>
-                </property>
-            </activation>
-        </profile>
-    </profiles>
-
     <properties>
+        <!-- Java version -->
+        <java.version>21</java.version>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
         <!-- Agent Sandbox project version -->
         <agent-sandbox.version>${project.version}</agent-sandbox.version>
 
@@ -85,6 +69,13 @@
         <assertj.version>3.24.2</assertj.version>
         <awaitility.version>4.2.0</awaitility.version>
         <logback.version>1.4.14</logback.version>
+
+        <!-- Plugin versions -->
+        <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
+        <maven-source-plugin.version>3.3.0</maven-source-plugin.version>
+        <maven-javadoc-plugin.version>3.6.0</maven-javadoc-plugin.version>
+        <maven-gpg-plugin.version>3.2.7</maven-gpg-plugin.version>
+        <central-publishing-maven-plugin.version>0.10.0</central-publishing-maven-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -119,19 +110,19 @@
 
             <!-- Project modules -->
             <dependency>
-                <groupId>org.springaicommunity</groupId>
+                <groupId>io.github.markpollack</groupId>
                 <artifactId>agent-sandbox-core</artifactId>
                 <version>${agent-sandbox.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.springaicommunity</groupId>
+                <groupId>io.github.markpollack</groupId>
                 <artifactId>agent-sandbox-core</artifactId>
                 <version>${agent-sandbox.version}</version>
                 <type>test-jar</type>
                 <scope>test</scope>
             </dependency>
             <dependency>
-                <groupId>org.springaicommunity</groupId>
+                <groupId>io.github.markpollack</groupId>
                 <artifactId>agent-sandbox-docker</artifactId>
                 <version>${agent-sandbox.version}</version>
             </dependency>
@@ -169,39 +160,12 @@
         </dependencies>
     </dependencyManagement>
 
-    <build>
-        <!-- Most plugin configuration inherited from community-parent -->
-        <pluginManagement>
-            <plugins>
-                <!-- Override to auto-apply formatting instead of just validating -->
-                <plugin>
-                    <groupId>io.spring.javaformat</groupId>
-                    <artifactId>spring-javaformat-maven-plugin</artifactId>
-                    <executions>
-                        <execution>
-                            <phase>process-sources</phase>
-                            <goals>
-                                <goal>apply</goal>
-                            </goals>
-                        </execution>
-                    </executions>
-                </plugin>
-            </plugins>
-        </pluginManagement>
-
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-compiler-plugin</artifactId>
-            </plugin>
-            <plugin>
-                <groupId>io.spring.javaformat</groupId>
-                <artifactId>spring-javaformat-maven-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </build>
-
-    <!-- distributionManagement inherited from community-parent -->
+    <distributionManagement>
+        <snapshotRepository>
+            <id>central</id>
+            <url>https://central.sonatype.com/repository/maven-snapshots/</url>
+        </snapshotRepository>
+    </distributionManagement>
 
     <repositories>
         <repository>
@@ -216,4 +180,126 @@
             </releases>
         </repository>
     </repositories>
+
+    <profiles>
+        <profile>
+            <id>docker</id>
+            <activation>
+                <property>
+                    <name>sandbox.infrastructure.test</name>
+                    <value>true</value>
+                </property>
+            </activation>
+        </profile>
+
+        <profile>
+            <id>release</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.codehaus.mojo</groupId>
+                        <artifactId>flatten-maven-plugin</artifactId>
+                        <version>1.6.0</version>
+                        <configuration>
+                            <flattenMode>ossrh</flattenMode>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>flatten</id>
+                                <phase>process-resources</phase>
+                                <goals><goal>flatten</goal></goals>
+                            </execution>
+                            <execution>
+                                <id>flatten.clean</id>
+                                <phase>clean</phase>
+                                <goals><goal>clean</goal></goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.sonatype.central</groupId>
+                        <artifactId>central-publishing-maven-plugin</artifactId>
+                        <version>${central-publishing-maven-plugin.version}</version>
+                        <extensions>true</extensions>
+                        <configuration>
+                            <publishingServerId>central</publishingServerId>
+                            <autoPublish>true</autoPublish>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-gpg-plugin</artifactId>
+                        <version>${maven-gpg-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>sign-artifacts</id>
+                                <phase>verify</phase>
+                                <goals><goal>sign</goal></goals>
+                                <configuration>
+                                    <gpgArguments>
+                                        <arg>--pinentry-mode</arg>
+                                        <arg>loopback</arg>
+                                    </gpgArguments>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-source-plugin</artifactId>
+                        <version>${maven-source-plugin.version}</version>
+                        <executions>
+                            <execution>
+                                <id>attach-sources</id>
+                                <goals><goal>jar-no-fork</goal></goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-javadoc-plugin</artifactId>
+                        <version>${maven-javadoc-plugin.version}</version>
+                        <configuration>
+                            <failOnError>false</failOnError>
+                            <quiet>true</quiet>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>attach-javadocs</id>
+                                <goals><goal>jar</goal></goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+    <build>
+        <pluginManagement>
+            <plugins>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-compiler-plugin</artifactId>
+                    <version>3.14.0</version>
+                    <configuration>
+                        <release>${java.version}</release>
+                    </configuration>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-surefire-plugin</artifactId>
+                    <version>3.5.2</version>
+                </plugin>
+            </plugins>
+        </pluginManagement>
+
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+        </plugins>
+    </build>
+
 </project>
