@@ -6,7 +6,7 @@
 
     <groupId>io.github.markpollack</groupId>
     <artifactId>agent-sandbox-parent</artifactId>
-    <version>0.10.0-SNAPSHOT</version>
+    <version>0.9.3</version>
     <packaging>pom</packaging>
 
     <name>Agent Sandbox</name>
@@ -61,7 +61,7 @@
         <testcontainers.version>1.20.4</testcontainers.version>
 
         <!-- JSON processing -->
-        <jackson.version>2.17.0</jackson.version>
+        <jackson.version>2.21.2</jackson.version>
 
         <!-- Test dependency versions -->
         <junit-jupiter.version>5.10.1</junit-jupiter.version>
@@ -80,6 +80,16 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- Jackson BOM import (first, so it wins) aligns every
+                 com.fasterxml.jackson artifact, including transitives -->
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+
             <!-- Process execution -->
             <dependency>
                 <groupId>org.zeroturnaround</groupId>
@@ -92,13 +102,6 @@
                 <groupId>org.testcontainers</groupId>
                 <artifactId>testcontainers</artifactId>
                 <version>${testcontainers.version}</version>
-            </dependency>
-
-            <!-- JSON processing -->
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-databind</artifactId>
-                <version>${jackson.version}</version>
             </dependency>
 
             <!-- Slf4j API -->
