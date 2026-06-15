@@ -68,7 +68,7 @@
         <mockito.version>5.7.0</mockito.version>
         <assertj.version>3.24.2</assertj.version>
         <awaitility.version>4.2.0</awaitility.version>
-        <logback.version>1.4.14</logback.version>
+        <logback.version>1.5.15</logback.version>
 
         <!-- Plugin versions -->
         <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
