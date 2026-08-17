@@ -1,4 +1,4 @@
-# Spring AI Sandbox Roadmap
+# Agent Sandbox Roadmap
 
 ## Vision
 
@@ -226,12 +226,12 @@ public class CommandHandleImpl implements CommandHandle {
 ## Module Structure
 
 ```
-spring-ai-sandbox/
-├── spring-ai-sandbox-core/        # Core API + LocalSandbox
-├── spring-ai-sandbox-docker/      # DockerSandbox (Testcontainers)
-├── spring-ai-sandbox-anthropic/   # AnthropicSandbox (NEW)
-├── spring-ai-sandbox-e2b/         # E2BSandbox (NEW)
-└── spring-ai-sandbox-bom/         # BOM for dependency management
+agent-sandbox/
+├── agent-sandbox-core/        # Core API + LocalSandbox
+├── agent-sandbox-docker/      # DockerSandbox (Testcontainers)
+├── agent-sandbox-anthropic/   # AnthropicSandbox (planned, not yet built)
+├── agent-sandbox-e2b/         # E2BSandbox
+└── agent-sandbox-bom/         # BOM (planned; versions are managed by agentworks-bom today)
 ```
 
 ## Implementation Phases
@@ -248,19 +248,19 @@ spring-ai-sandbox/
 - [ ] Ensure thread-safety
 
 ### Phase 3: AnthropicSandbox
-- [ ] Create `spring-ai-sandbox-anthropic` module
+- [ ] Create `agent-sandbox-anthropic` module
 - [ ] Implement `SandboxPolicy` builder
 - [ ] Wrap Anthropic `srt` CLI or native port
 - [ ] Platform detection (macOS/Linux)
 
-### Phase 4: E2BSandbox (In Progress)
-- [x] Create `spring-ai-sandbox-e2b` module
+### Phase 4: E2BSandbox ✅
+- [x] Create `agent-sandbox-e2b` module
 - [x] Implement REST client for E2B API (sandbox lifecycle)
 - [x] Implement envd client for command execution
 - [x] Implement E2BSandboxFiles for file operations
 - [x] Support sandbox reconnection via `E2BSandbox.connect(sandboxId)`
 - [x] Handle authentication (API key via builder or `E2B_API_KEY` env var)
-- [ ] Integration testing (blocked by rate limit - retry after cooldown)
+- [x] Integration testing (`E2BSandboxIT` runs the full TCK against the live service)
 
 ## References
 
@@ -268,4 +268,4 @@ spring-ai-sandbox/
 - [E2B SDK](https://github.com/e2b-dev/E2B)
 - [Daytona SDK](https://github.com/daytonaio/sdk)
 - [Microsandbox](https://github.com/zerocore-ai/microsandbox)
-- [Research: Running AI Agents in Secure Remote Sandboxes](plans/research/)
+- [Agent Sandbox documentation](https://lab.pollack.ai/projects/agent-sandbox)
