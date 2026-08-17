@@ -78,6 +78,7 @@
         <maven-javadoc-plugin.version>3.6.0</maven-javadoc-plugin.version>
         <maven-gpg-plugin.version>3.2.7</maven-gpg-plugin.version>
         <central-publishing-maven-plugin.version>0.10.0</central-publishing-maven-plugin.version>
+        <cyclonedx-maven-plugin.version>2.9.2</cyclonedx-maven-plugin.version>
     </properties>
 
     <dependencyManagement>
@@ -172,19 +173,12 @@
         </snapshotRepository>
     </distributionManagement>
 
-    <repositories>
-        <repository>
-            <id>central-snapshots</id>
-            <name>Maven Central Snapshots</name>
-            <url>https://central.sonatype.com/repository/maven-snapshots/</url>
-            <snapshots>
-                <enabled>true</enabled>
-            </snapshots>
-            <releases>
-                <enabled>false</enabled>
-            </releases>
-        </repository>
-    </repositories>
+    <!--
+        No <repositories> element: every dependency resolves from Maven Central. A
+        repository declared here is copied into the flattened module POMs and published,
+        so consumers of agent-sandbox-core would silently inherit a snapshot repository
+        into their own dependency resolution.
+    -->
 
     <profiles>
         <!-- OWASP dependency-check: build-time CVE gate (fails on HIGH+). Run: ./mvnw -Powasp verify -->
@@ -325,6 +319,46 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+            </plugin>
+
+            <!--
+                One schema-1.6 JSON aggregate for the complete reactor. The execution is
+                root-only so child modules neither generate nor attach module BOMs. It runs
+                at verify because the upstream aggregate goal requires online mode; the
+                release deploy lifecycle regenerates and attaches this parent artifact
+                before publication.
+            -->
+            <plugin>
+                <groupId>org.cyclonedx</groupId>
+                <artifactId>cyclonedx-maven-plugin</artifactId>
+                <version>${cyclonedx-maven-plugin.version}</version>
+                <inherited>false</inherited>
+                <configuration>
+                    <projectType>library</projectType>
+                    <schemaVersion>1.6</schemaVersion>
+                    <includeBomSerialNumber>true</includeBomSerialNumber>
+                    <includeCompileScope>true</includeCompileScope>
+                    <includeProvidedScope>true</includeProvidedScope>
+                    <includeRuntimeScope>true</includeRuntimeScope>
+                    <includeSystemScope>true</includeSystemScope>
+                    <includeTestScope>false</includeTestScope>
+                    <includeLicenseText>false</includeLicenseText>
+                    <outputReactorProjects>false</outputReactorProjects>
+                    <!-- Central Publishing replaces Maven's standard deploy path. -->
+                    <skipNotDeployed>false</skipNotDeployed>
+                    <outputFormat>json</outputFormat>
+                    <outputName>agent-sandbox-bom</outputName>
+                    <classifier>cyclonedx</classifier>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>aggregate-cyclonedx-sbom</id>
+                        <phase>verify</phase>
+                        <goals>
+                            <goal>makeAggregateBom</goal>
+                        </goals>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
