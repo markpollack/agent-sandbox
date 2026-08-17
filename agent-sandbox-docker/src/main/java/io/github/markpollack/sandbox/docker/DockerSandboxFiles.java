@@ -161,12 +161,12 @@ class DockerSandboxFiles implements SandboxFiles {
 				throw new SandboxException("Path is not a directory: " + relativePath);
 			}
 
-			// Use find command with maxdepth to list files
-			// Output format: type|size|mtime|path
-			// type: d for directory, f for file
-			// Use stat to get size and mtime
-			ExecResult findResult = container.execInContainer("bash", "-c", "find \"" + fullPath
-					+ "\" -mindepth 1 -maxdepth " + maxDepth + " -printf '%y|%s|%T@|%p\\n' 2>/dev/null | sort");
+			// Run find directly as argv rather than through "bash -c": interpolating a
+			// caller-supplied path into a shell string lets a path containing quotes or
+			// $(...) execute arbitrary commands in the container.
+			// Output format: type|size|mtime|path (type: d for directory, f for file).
+			ExecResult findResult = container.execInContainer("find", fullPath, "-mindepth", "1", "-maxdepth",
+					Integer.toString(maxDepth), "-printf", "%y|%s|%T@|%p\n");
 
 			if (findResult.getExitCode() != 0) {
 				throw new SandboxException(
@@ -174,26 +174,24 @@ class DockerSandboxFiles implements SandboxFiles {
 			}
 
 			List<FileEntry> entries = new ArrayList<>();
-			String output = findResult.getStdout();
-			if (!output.isEmpty()) {
-				for (String line : output.split("\n")) {
-					if (line.trim().isEmpty()) {
-						continue;
-					}
-					String[] parts = line.split("\\|", 4);
-					if (parts.length >= 4) {
-						FileType type = "d".equals(parts[0]) ? FileType.DIRECTORY : FileType.FILE;
-						long size = type == FileType.DIRECTORY ? 0 : Long.parseLong(parts[1]);
-						// parts[2] is epoch seconds with decimal, parse to Instant
-						double epochSeconds = Double.parseDouble(parts[2]);
-						Instant modifiedTime = Instant.ofEpochSecond((long) epochSeconds,
-								(long) ((epochSeconds % 1) * 1_000_000_000));
-						String absolutePath = parts[3];
-						// Convert to relative path from workdir
-						String path = absolutePath.startsWith("/work/") ? absolutePath.substring(6) : absolutePath;
-						String name = path.contains("/") ? path.substring(path.lastIndexOf('/') + 1) : path;
-						entries.add(new FileEntry(name, type, path, size, modifiedTime));
-					}
+			// The old shell pipeline sorted with `| sort`; sort here to keep ordering stable.
+			for (String line : findResult.getStdout().lines().sorted().toList()) {
+				if (line.trim().isEmpty()) {
+					continue;
+				}
+				String[] parts = line.split("\\|", 4);
+				if (parts.length >= 4) {
+					FileType type = "d".equals(parts[0]) ? FileType.DIRECTORY : FileType.FILE;
+					long size = type == FileType.DIRECTORY ? 0 : Long.parseLong(parts[1]);
+					// parts[2] is epoch seconds with decimal, parse to Instant
+					double epochSeconds = Double.parseDouble(parts[2]);
+					Instant modifiedTime = Instant.ofEpochSecond((long) epochSeconds,
+							(long) ((epochSeconds % 1) * 1_000_000_000));
+					String absolutePath = parts[3];
+					// Convert to relative path from workdir
+					String path = absolutePath.startsWith("/work/") ? absolutePath.substring(6) : absolutePath;
+					String name = path.contains("/") ? path.substring(path.lastIndexOf('/') + 1) : path;
+					entries.add(new FileEntry(name, type, path, size, modifiedTime));
 				}
 			}
 			return entries;

@@ -21,6 +21,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import io.github.markpollack.sandbox.ExecResult;
@@ -60,14 +61,31 @@ import org.testcontainers.utility.DockerImageName;
  *     assertTrue(sandbox.files().exists("target/classes/Main.class"));
  * }  // Auto-cleanup on close
  * }</pre>
+ *
+ * <p>
+ * <strong>Default image.</strong> When no image is given, this sandbox pulls
+ * {@code ghcr.io/spring-ai-community/agents-runtime:latest}. That is a mutable
+ * {@code :latest} tag in the
+ * {@code spring-ai-community} registry namespace, which this project no longer
+ * publishes to; its contents can change without a release here. Pass an image you
+ * control to {@link Builder#image(String)} — ideally pinned by digest — for any use
+ * where the contents of the sandbox root filesystem matter.
+ * </p>
+ *
+ * <p>
+ * Requires a Docker Engine speaking API version 1.44 or newer.
+ * </p>
  */
 public final class DockerSandbox implements Sandbox {
 
 	private static final Logger logger = LoggerFactory.getLogger(DockerSandbox.class);
 
+	/** Default container image. See the class javadoc before relying on it. */
 	private static final String DEFAULT_IMAGE = "ghcr.io/spring-ai-community/agents-runtime:latest";
 
 	private static final Path WORK_DIR = Path.of("/work");
+
+	private static final Pattern ENV_NAME = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
 
 	private final GenericContainer<?> container;
 
@@ -154,14 +172,15 @@ public final class DockerSandbox implements Sandbox {
 			commandWithEnv.add("-lc");
 
 			// Build shell command that sets environment variables and then executes the
-			// command
+			// command. Values are shell-quoted: an unquoted value containing a single
+			// quote would otherwise close the literal and run as shell code.
 			StringBuilder shellScript = new StringBuilder();
 			for (var entry : customizedSpec.env().entrySet()) {
 				shellScript.append("export ")
-					.append(entry.getKey())
-					.append("='")
-					.append(entry.getValue())
-					.append("'; ");
+					.append(requireValidEnvName(entry.getKey()))
+					.append('=')
+					.append(shellQuote(entry.getValue()))
+					.append("; ");
 			}
 			shellScript.append("exec \"$@\"");
 
@@ -225,6 +244,26 @@ public final class DockerSandbox implements Sandbox {
 			return List.of("bash", "-c", shellCmd);
 		}
 		return command;
+	}
+
+	/**
+	 * Wraps a value in single quotes so the shell reads it as one literal word. An
+	 * embedded single quote is emitted as {@code '\''} -- close, escaped quote, reopen.
+	 */
+	private static String shellQuote(String value) {
+		return "'" + value.replace("'", "'\\''") + "'";
+	}
+
+	/**
+	 * Rejects an environment variable name that could not be exported literally. Names
+	 * are shell identifiers and cannot be quoted, so an unusable one is an error rather
+	 * than something to escape.
+	 */
+	private static String requireValidEnvName(String name) {
+		if (!ENV_NAME.matcher(name).matches()) {
+			throw new IllegalArgumentException("Illegal environment variable name: " + name);
+		}
+		return name;
 	}
 
 	private ExecSpec applyCustomizers(ExecSpec spec) {

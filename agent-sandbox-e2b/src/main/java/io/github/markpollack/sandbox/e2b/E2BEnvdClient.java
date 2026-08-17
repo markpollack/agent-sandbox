@@ -181,9 +181,13 @@ class E2BEnvdClient {
 						envVars != null ? envVars : Map.of(), workDir);
 			}
 			else {
-				// Regular command - join and wrap in bash -l -c
-				String cmd = String.join(" ", command);
-				processConfig = new ProcessConfig("/bin/bash", List.of("-l", "-c", cmd),
+				// Regular command - wrap in a login shell so the E2B template's PATH is
+				// set up, but quote each argument so the shell reconstructs exactly the
+				// argv the caller passed. A plain space-join would let the shell split on
+				// embedded whitespace and interpret $, ;, and backticks, giving this
+				// backend different -- and injectable -- semantics from LocalSandbox and
+				// DockerSandbox for the very same ExecSpec.
+				processConfig = new ProcessConfig("/bin/bash", List.of("-l", "-c", toShellCommand(command)),
 						envVars != null ? envVars : Map.of(), workDir);
 			}
 
@@ -256,6 +260,27 @@ class E2BEnvdClient {
 		catch (IOException e) {
 			throw new SandboxException("Failed to execute command", e);
 		}
+	}
+
+	/**
+	 * Renders an argv list as a shell command line that reproduces that exact argv.
+	 * <p>
+	 * Each argument is wrapped in single quotes, with an embedded single quote emitted
+	 * as {@code '\''} -- close the literal, escape the quote, reopen. Nothing inside a
+	 * single-quoted word is expanded or split by the shell.
+	 * </p>
+	 * @param command the argument vector, as given to the sandbox
+	 * @return a command line for {@code bash -c}
+	 */
+	static String toShellCommand(List<String> command) {
+		StringBuilder rendered = new StringBuilder();
+		for (String argument : command) {
+			if (rendered.length() > 0) {
+				rendered.append(' ');
+			}
+			rendered.append('\'').append(argument.replace("'", "'\\''")).append('\'');
+		}
+		return rendered.toString();
 	}
 
 	/**

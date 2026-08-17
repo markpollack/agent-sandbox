@@ -467,4 +467,31 @@ public abstract class AbstractSandboxTCK {
 		assertThat(sandbox.files().exists("chain2.txt")).isFalse();
 	}
 
+	/**
+	 * Test that an ExecSpec is an argument vector on every backend. Verifies that a
+	 * backend which reaches its command through a shell still passes each argument
+	 * through as one literal word.
+	 *
+	 * <p>
+	 * Backend substitutability is the point of this API, so the same spec must mean the
+	 * same thing everywhere. It is also the security boundary: an argument that the shell
+	 * expands or splits is an argument a caller can turn into a command.
+	 * </p>
+	 */
+	@Test
+	void testArgumentsAreNotShellInterpreted() {
+		// Arrange: arguments carrying whitespace and every common shell metacharacter
+		ExecSpec spec = ExecSpec.builder()
+			.command("echo", "one two", "$HOME", "*", "a;b", "back`tick")
+			.timeout(Duration.ofSeconds(30))
+			.build();
+
+		// Act
+		ExecResult result = sandbox.exec(spec);
+
+		// Assert: echo received exactly five arguments, unexpanded and unsplit
+		assertThat(result.success()).isTrue();
+		assertThat(result.stdout().trim()).isEqualTo("one two $HOME * a;b back`tick");
+	}
+
 }
