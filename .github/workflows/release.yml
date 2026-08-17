@@ -4,19 +4,24 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (e.g., 0.9.2)'
+        description: 'Release version (e.g., 0.10.0)'
         required: true
         type: string
 
 jobs:
   release:
-    uses: markpollack/build-tools/.github/workflows/maven-central-release.yml@main
+    # Pinned to an immutable build-tools commit so a change to that repository's
+    # default branch cannot alter this repository's release tail without review.
+    uses: markpollack/build-tools/.github/workflows/maven-central-release.yml@35297f1ade5f47c2925d6dab42a7e2d43bd734d0
     permissions:
       contents: write
     with:
       version: ${{ inputs.version }}
       java-version: '21'
-      skip-tests: true
+      # Publish only source that passed the repository's clean verification.
+      # The Docker and E2B suites gate themselves on infrastructure that is absent
+      # in CI, so this runs the full reactor with the unit/TCK tests enabled.
+      skip-tests: false
     secrets:
       MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
       MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
