@@ -157,9 +157,14 @@ public class ExecSpec {
 		return Objects.hash(command, env, timeout);
 	}
 
+	/**
+	 * Returns a description of this specification. Environment variable names are
+	 * listed but their values are not: an {@code ExecSpec} routinely carries API keys
+	 * and tokens, and this string ends up in logs and exception messages.
+	 */
 	@Override
 	public String toString() {
-		return "ExecSpec{" + "command=" + command + ", env=" + env + ", timeout=" + timeout + '}';
+		return "ExecSpec{" + "command=" + command + ", envKeys=" + env.keySet() + ", timeout=" + timeout + '}';
 	}
 
 }

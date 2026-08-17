@@ -169,16 +169,15 @@ public final class LocalSandbox implements Sandbox {
 				}
 			}
 
-			// Apply environment variables
-			// Merge parent environment with custom variables to preserve PATH and other
-			// critical variables
+			// Apply environment variables.
+			// ProcessExecutor.environment() ADDS to the inherited process environment
+			// rather than replacing it, so PATH and other host variables are already
+			// preserved. Only the caller's overrides are passed: copying System.getenv()
+			// in here would hand every host secret to zt-exec, which logs the whole
+			// environment map -- values included -- at DEBUG level.
 			if (!customizedSpec.env().isEmpty()) {
 				logger.debug("LocalSandbox adding environment variables: {}", customizedSpec.env().keySet());
-				// Create merged environment: parent + custom (custom variables override
-				// parent)
-				var mergedEnv = new java.util.HashMap<>(System.getenv());
-				mergedEnv.putAll(customizedSpec.env());
-				executor.environment(mergedEnv);
+				executor.environment(customizedSpec.env());
 			}
 
 			// Handle timeout
