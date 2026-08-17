@@ -36,6 +36,42 @@ Release notes: [What's New](https://lab.pollack.ai/docs/agent-sandbox/whats-new)
 trusted code and for development. Use `DockerSandbox` or `E2BSandbox` when the command
 is not trusted.
 
+## Container images are yours, not ours
+
+**This project publishes Maven artifacts. It does not build, publish, own, or maintain
+any container image.**
+
+`agent-sandbox-docker` runs an image you select. There is no default: every constructor
+and `DockerSandbox.builder().image(...)` requires an explicit reference, and `build()`
+fails before it contacts Docker if you did not supply one.
+
+```java
+try (Sandbox sandbox = DockerSandbox.builder()
+        .image("your-registry/your-runtime@sha256:...")   // required
+        .build()) {
+    ...
+}
+```
+
+What that means for you:
+
+- **You own the image** — its provenance, contents, patching cadence, and vulnerability
+  policy. Nothing about it is asserted or vouched for here.
+- **Prefer an immutable digest** (`repo@sha256:...`) over a mutable tag in production, and
+  scan and attest whatever you pick. A `:latest` tag can change under you without any
+  release of this library.
+- **The image needs a POSIX userland**: `bash`, GNU coreutils, and GNU findutils. File
+  listing uses `find -printf`, which BusyBox does not implement, so minimal BusyBox images
+  will not work.
+
+### Docker access is a privileged trust boundary
+
+Reaching a Docker daemon is not a sandbox in itself. A caller who can start containers can
+generally obtain root-equivalent control of the host, and container isolation alone is not
+a security guarantee against hostile code. Treat this backend as **workload separation**,
+and add the kernel-, user-, and network-level controls your threat model actually requires
+before running code you do not trust.
+
 ## Maven
 
 ```xml
@@ -82,6 +118,10 @@ infrastructure and gate themselves off when it is absent:
 ./mvnw -pl agent-sandbox-e2b verify                                      # needs E2B_API_KEY
 ```
 
+The Docker suite runs against a minimal `ubuntu` fixture pinned by digest. That fixture is
+a test dependency only — it is not shipped, not endorsed as an application runtime, and
+carries no recommendation for your own image choice.
+
 A local dependency CVE scan is available and is deliberately not part of ordinary CI:
 
 ```bash
@@ -95,6 +135,12 @@ Pre-1.0 and versioned accordingly: the API may change between minor versions.
 `LocalSandbox` and `DockerSandbox` are exercised by the full TCK; `E2BSandbox` passes
 the same TCK against the live E2B service. `agent-sandbox-docker` requires Docker
 Engine with API version 1.44 or newer.
+
+**Breaking change in 0.10.0.** `DockerSandbox` no longer has a default image. The
+no-argument `DockerSandbox()` constructor is removed, and `builder()` now requires
+`.image(...)`. Previously it silently pulled `ghcr.io/spring-ai-community/agents-runtime:latest`
+— a mutable tag in a namespace this project does not control or maintain. Pass the image
+you want; constructors taking an explicit image are unchanged.
 
 ## Licensing
 

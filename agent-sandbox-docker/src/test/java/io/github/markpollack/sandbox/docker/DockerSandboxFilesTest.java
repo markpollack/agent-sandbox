@@ -41,7 +41,7 @@ class DockerSandboxFilesTest {
 	@Test
 	void createFileShouldCreateFileWithContent() {
 		try (DockerSandbox sandbox = DockerSandbox.builder()
-			.image("ghcr.io/spring-ai-community/agents-runtime:latest")
+			.image(DockerTestImages.MINIMAL_POSIX)
 			.build()) {
 			sandbox.files().create("test.txt", "Hello, World!");
 
@@ -53,7 +53,7 @@ class DockerSandboxFilesTest {
 	@Test
 	void createFileShouldCreateParentDirectories() {
 		try (DockerSandbox sandbox = DockerSandbox.builder()
-			.image("ghcr.io/spring-ai-community/agents-runtime:latest")
+			.image(DockerTestImages.MINIMAL_POSIX)
 			.build()) {
 			sandbox.files().create("src/main/java/Test.java", "public class Test {}");
 
@@ -67,7 +67,7 @@ class DockerSandboxFilesTest {
 	@Test
 	void createDirectoryShouldCreateNestedDirectories() {
 		try (DockerSandbox sandbox = DockerSandbox.builder()
-			.image("ghcr.io/spring-ai-community/agents-runtime:latest")
+			.image(DockerTestImages.MINIMAL_POSIX)
 			.build()) {
 			sandbox.files().createDirectory("target/classes/com/example");
 
@@ -78,7 +78,7 @@ class DockerSandboxFilesTest {
 	@Test
 	void setupShouldCreateMultipleFiles() {
 		try (DockerSandbox sandbox = DockerSandbox.builder()
-			.image("ghcr.io/spring-ai-community/agents-runtime:latest")
+			.image(DockerTestImages.MINIMAL_POSIX)
 			.build()) {
 			List<FileSpec> files = List.of(FileSpec.of("pom.xml", "<project/>"),
 					FileSpec.of("src/Main.java", "public class Main {}"), FileSpec.of("README.md", "# README"));
@@ -95,7 +95,7 @@ class DockerSandboxFilesTest {
 	@Test
 	void existsShouldReturnFalseForNonexistentFile() {
 		try (DockerSandbox sandbox = DockerSandbox.builder()
-			.image("ghcr.io/spring-ai-community/agents-runtime:latest")
+			.image(DockerTestImages.MINIMAL_POSIX)
 			.build()) {
 			assertThat(sandbox.files().exists("nonexistent.txt")).isFalse();
 		}
@@ -104,7 +104,7 @@ class DockerSandboxFilesTest {
 	@Test
 	void andShouldReturnParentSandbox() {
 		try (DockerSandbox sandbox = DockerSandbox.builder()
-			.image("ghcr.io/spring-ai-community/agents-runtime:latest")
+			.image(DockerTestImages.MINIMAL_POSIX)
 			.build()) {
 			Sandbox returned = sandbox.files().create("test.txt", "content").and();
 
@@ -115,7 +115,7 @@ class DockerSandboxFilesTest {
 	@Test
 	void fluentChainingWithExec() {
 		try (DockerSandbox sandbox = DockerSandbox.builder()
-			.image("ghcr.io/spring-ai-community/agents-runtime:latest")
+			.image(DockerTestImages.MINIMAL_POSIX)
 			.build()) {
 			ExecResult result = sandbox.files()
 				.create("script.sh", "#!/bin/bash\necho 'Hello from script'")
@@ -130,7 +130,7 @@ class DockerSandboxFilesTest {
 	@Test
 	void builderWithFileShouldCreateFilesOnBuild() {
 		try (DockerSandbox sandbox = DockerSandbox.builder()
-			.image("ghcr.io/spring-ai-community/agents-runtime:latest")
+			.image(DockerTestImages.MINIMAL_POSIX)
 			.withFile("config.txt", "key=value")
 			.withFile("data.json", "{}")
 			.build()) {
@@ -146,7 +146,7 @@ class DockerSandboxFilesTest {
 		List<FileSpec> files = List.of(FileSpec.of("a.txt", "A"), FileSpec.of("b.txt", "B"));
 
 		try (DockerSandbox sandbox = DockerSandbox.builder()
-			.image("ghcr.io/spring-ai-community/agents-runtime:latest")
+			.image(DockerTestImages.MINIMAL_POSIX)
 			.withFiles(files)
 			.build()) {
 
@@ -158,7 +158,7 @@ class DockerSandboxFilesTest {
 	@Test
 	void shouldCleanupOnCloseShouldReturnTrue() {
 		try (DockerSandbox sandbox = DockerSandbox.builder()
-			.image("ghcr.io/spring-ai-community/agents-runtime:latest")
+			.image(DockerTestImages.MINIMAL_POSIX)
 			.build()) {
 			// Docker containers always clean up
 			assertThat(sandbox.shouldCleanupOnClose()).isTrue();

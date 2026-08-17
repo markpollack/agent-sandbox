@@ -48,12 +48,22 @@ import org.testcontainers.utility.DockerImageName;
  * command executions within the same container environment.
  *
  * <p>
- * Use the {@link #builder()} for fluent configuration including initial file setup:
+ * <strong>The caller selects the image; there is no default.</strong> This project
+ * publishes Maven artifacts, not container images, and does not own or maintain a
+ * runtime image on your behalf. Every constructor and {@link Builder#image(String)}
+ * requires an explicit image, and {@link Builder#build()} fails before contacting
+ * Docker if none was given.
+ * </p>
+ *
+ * <p>
+ * With that choice comes ownership: the image's provenance, contents, patching, and
+ * vulnerability policy are the caller's. For production, prefer an immutable digest
+ * over a mutable tag, and scan and attest the image you pick.
  * </p>
  *
  * <pre>{@code
  * try (Sandbox sandbox = DockerSandbox.builder()
- *         .image("ghcr.io/spring-ai-community/agents-runtime:latest")
+ *         .image("your-registry/your-runtime@sha256:...")
  *         .withFile("src/Main.java", "public class Main {}")
  *         .withFile("pom.xml", pomContent)
  *         .build()) {
@@ -63,13 +73,17 @@ import org.testcontainers.utility.DockerImageName;
  * }</pre>
  *
  * <p>
- * <strong>Default image.</strong> When no image is given, this sandbox pulls
- * {@code ghcr.io/spring-ai-community/agents-runtime:latest}. That is a mutable
- * {@code :latest} tag in the
- * {@code spring-ai-community} registry namespace, which this project no longer
- * publishes to; its contents can change without a release here. Pass an image you
- * control to {@link Builder#image(String)} — ideally pinned by digest — for any use
- * where the contents of the sandbox root filesystem matter.
+ * The image must provide a POSIX shell environment: {@code bash}, GNU coreutils, and
+ * GNU {@code findutils} (the file listing uses {@code find -printf}). The container
+ * runs a long-lived {@code sleep infinity} process so many commands can share it.
+ * </p>
+ *
+ * <p>
+ * <strong>Trust boundary.</strong> Reaching a Docker daemon is a privileged operation:
+ * a caller who can start containers can generally obtain root-equivalent control of the
+ * host. Container isolation alone is not a security guarantee against hostile code.
+ * Treat this backend as workload separation, and add the kernel-, user-, and
+ * network-level controls your threat model requires.
  * </p>
  *
  * <p>
@@ -79,9 +93,6 @@ import org.testcontainers.utility.DockerImageName;
 public final class DockerSandbox implements Sandbox {
 
 	private static final Logger logger = LoggerFactory.getLogger(DockerSandbox.class);
-
-	/** Default container image. See the class javadoc before relying on it. */
-	private static final String DEFAULT_IMAGE = "ghcr.io/spring-ai-community/agents-runtime:latest";
 
 	private static final Path WORK_DIR = Path.of("/work");
 
@@ -96,15 +107,10 @@ public final class DockerSandbox implements Sandbox {
 	private volatile boolean closed = false;
 
 	/**
-	 * Creates a DockerSandbox with the default agents runtime image and no customizers.
-	 */
-	public DockerSandbox() {
-		this(DEFAULT_IMAGE, List.of());
-	}
-
-	/**
 	 * Creates a DockerSandbox with no customizers.
-	 * @param baseImage the Docker image to use for the container
+	 * @param baseImage the Docker image to run, which the caller selects and owns;
+	 * prefer an immutable digest
+	 * @throws IllegalArgumentException if the image is null or blank
 	 */
 	public DockerSandbox(String baseImage) {
 		this(baseImage, List.of());
@@ -112,10 +118,13 @@ public final class DockerSandbox implements Sandbox {
 
 	/**
 	 * Creates a DockerSandbox with the specified customizers.
-	 * @param baseImage the Docker image to use for the container
+	 * @param baseImage the Docker image to run, which the caller selects and owns;
+	 * prefer an immutable digest
 	 * @param customizers list of customizers to apply before execution
+	 * @throws IllegalArgumentException if the image is null or blank
 	 */
 	public DockerSandbox(String baseImage, List<ExecSpecCustomizer> customizers) {
+		requireImage(baseImage);
 		this.customizers = List.copyOf(customizers);
 		this.container = new GenericContainer<>(DockerImageName.parse(baseImage)).withWorkingDirectory("/work")
 			.withCommand("sleep", "infinity");
@@ -247,6 +256,22 @@ public final class DockerSandbox implements Sandbox {
 	}
 
 	/**
+	 * Requires an explicit image. There is no default: this project ships Maven
+	 * artifacts, not container images, so the caller chooses what runs.
+	 * @param image the image reference to check
+	 * @throws IllegalArgumentException if it is null or blank
+	 */
+	private static void requireImage(String image) {
+		if (image == null || image.isBlank()) {
+			throw new IllegalArgumentException(
+					"A Docker image is required: DockerSandbox has no default image. Call "
+							+ "DockerSandbox.builder().image(\"<repository>[:tag|@sha256:...]\") or use a "
+							+ "constructor that takes an image. Prefer an immutable digest in production; "
+							+ "the image must provide bash, GNU coreutils, and GNU findutils.");
+		}
+	}
+
+	/**
 	 * Wraps a value in single quotes so the shell reads it as one literal word. An
 	 * embedded single quote is emitted as {@code '\''} -- close, escaped quote, reopen.
 	 */
@@ -338,15 +363,20 @@ public final class DockerSandbox implements Sandbox {
 	 */
 	public static class Builder {
 
-		private String image = DEFAULT_IMAGE;
+		private String image;
 
 		private List<ExecSpecCustomizer> customizers = new ArrayList<>();
 
 		private List<io.github.markpollack.sandbox.FileSpec> initialFiles = new ArrayList<>();
 
 		/**
-		 * Set the Docker image to use for the sandbox.
-		 * @param image the Docker image name
+		 * Set the Docker image to run. Required: there is no default.
+		 * <p>
+		 * The caller selects and owns this image, including its provenance, contents,
+		 * patching, and vulnerability policy. Prefer an immutable digest
+		 * ({@code repo@sha256:...}) over a mutable tag in production.
+		 * </p>
+		 * @param image the Docker image reference
 		 * @return this builder
 		 */
 		public Builder image(String image) {
@@ -387,10 +417,16 @@ public final class DockerSandbox implements Sandbox {
 
 		/**
 		 * Build the DockerSandbox instance.
+		 * <p>
+		 * Fails immediately, before contacting Docker, if no image was supplied.
+		 * </p>
 		 * @return a new DockerSandbox
+		 * @throws IllegalArgumentException if {@link #image(String)} was not called, or
+		 * was given a null or blank value
 		 * @throws SandboxException if the sandbox cannot be created
 		 */
 		public DockerSandbox build() {
+			requireImage(image);
 			DockerSandbox sandbox = new DockerSandbox(image, customizers);
 
 			// Setup initial files

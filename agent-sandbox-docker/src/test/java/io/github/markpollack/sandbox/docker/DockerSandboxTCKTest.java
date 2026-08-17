@@ -36,7 +36,8 @@ import java.util.List;
  * </p>
  *
  * <p>
- * Requires Docker to be available and the agents-runtime image to be accessible.
+ * Requires a Docker daemon. Runs against a minimal POSIX test fixture pinned by
+ * digest; see {@link DockerTestImages}.
  * </p>
  */
 @EnabledIfSystemProperty(named = "sandbox.infrastructure.test", matches = "true")
@@ -44,8 +45,8 @@ class DockerSandboxTCKTest extends AbstractSandboxTCK {
 
 	@BeforeEach
 	void setUp() {
-		// Create DockerSandbox with agents-runtime image
-		this.sandbox = new DockerSandbox("ghcr.io/spring-ai-community/agents-runtime:latest", List.of());
+		// The caller always selects the image; this backend has no default.
+		this.sandbox = new DockerSandbox(DockerTestImages.MINIMAL_POSIX, List.of());
 	}
 
 }
