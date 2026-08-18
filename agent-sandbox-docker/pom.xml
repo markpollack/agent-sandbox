@@ -28,6 +28,14 @@
             <artifactId>testcontainers</artifactId>
         </dependency>
 
+        <!-- Keep the safe compression floor in the published Docker-module POM.
+             Parent dependency management governs the source reactor, but it does not
+             travel through this module to a standalone consumer after flattening. -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-compress</artifactId>
+        </dependency>
+
         <!-- Slf4j API -->
         <dependency>
             <groupId>org.slf4j</groupId>

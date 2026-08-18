@@ -17,6 +17,13 @@ Published artifacts are licensed under the Business Source License 1.1, include 
 applicable license texts, and publish a CycloneDX 1.6 aggregate SBOM with the parent
 artifact.
 
+The published `agent-sandbox-docker` metadata now carries the managed
+`commons-compress` 1.28.0 floor as a direct dependency. This makes a standalone Maven
+consumer select the corrected version even without importing the Agent Sandbox parent
+or an AgentWorks BOM, avoiding the two MEDIUM findings present in Testcontainers'
+older transitive 1.24.0 selection. This correction applies to the Java dependency
+closure; it does not describe or alter any caller-selected container image.
+
 The actual Java runtime closure has three disclosed findings in Apache
 HttpComponents classes shaded into the Testcontainers/docker-java transport: two
 HIGH records and one MEDIUM record. Published upstream combinations examined do not
