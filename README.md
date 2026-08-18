@@ -1,10 +1,11 @@
 # Agent Sandbox
 
-One Java API for running commands in an isolated workspace, with interchangeable
-backends. An agent, an evaluation harness, or a build runner writes against the
-`Sandbox` interface once; whether that command runs as a local process, inside a
-Docker container, or in a remote Firecracker microVM becomes a construction-time
-choice rather than a rewrite.
+One Java API for synchronous command execution and workspace file operations across
+multiple backends. The shared command/file contract is tested by the
+`AbstractSandboxTCK`; backend-specific or unsupported capabilities, such as interactive
+execution, are not interchangeable. An agent, evaluation harness, or build runner can
+choose a local process, a Docker container, or a remote Firecracker microVM at
+construction time.
 
 **Documentation: [lab.pollack.ai/projects/agent-sandbox](https://lab.pollack.ai/projects/agent-sandbox)** —
 backends, the core API, file operations and customizers.
@@ -29,12 +30,13 @@ Release notes: [What's New](https://lab.pollack.ai/docs/agent-sandbox/whats-new)
 | Module | Backend | Isolation | Notable dependencies |
 |---|---|---|---|
 | `agent-sandbox-core` | `LocalSandbox` | none — runs on the host | zt-exec, slf4j |
-| `agent-sandbox-docker` | `DockerSandbox` | container | testcontainers |
+| `agent-sandbox-docker` | `DockerSandbox` | container | Testcontainers |
 | `agent-sandbox-e2b` | `E2BSandbox` | remote microVM | jackson, awaitility |
 
-`LocalSandbox` deliberately provides no isolation and says so at runtime; it is for
-trusted code and for development. Use `DockerSandbox` or `E2BSandbox` when the command
-is not trusted.
+`LocalSandbox` provides process and workspace convenience but no security isolation; it
+is for trusted code and development. `DockerSandbox` is the convenient local Docker
+backend. It is not presented as a hardened multi-tenant execution service, and a
+container alone is not a complete hostile-workload security boundary.
 
 ## Container images are yours, not ours
 
@@ -57,9 +59,9 @@ What that means for you:
 
 - **You own the image** — its provenance, contents, patching cadence, and vulnerability
   policy. Nothing about it is asserted or vouched for here.
-- **Prefer an immutable digest** (`repo@sha256:...`) over a mutable tag in production, and
-  scan and attest whatever you pick. A `:latest` tag can change under you without any
-  release of this library.
+- **Prefer an immutable digest** (`repo@sha256:...`) over a mutable tag for reproducible
+  operation, and scan and attest whatever you pick. A `:latest` tag can change under you
+  without any release of this library.
 - **The image needs a POSIX userland**: `bash`, GNU coreutils, and GNU findutils. File
   listing uses `find -printf`, which BusyBox does not implement, so minimal BusyBox images
   will not work.
@@ -114,7 +116,8 @@ That runs the unit tests and the `LocalSandbox` TCK. The other two backends need
 infrastructure and gate themselves off when it is absent:
 
 ```bash
-./mvnw -pl agent-sandbox-docker -Dsandbox.infrastructure.test=true test  # needs a Docker daemon
+./mvnw -B -pl agent-sandbox-core,agent-sandbox-docker -am clean verify \
+  -Dsandbox.infrastructure.test=true                                     # needs a Docker daemon
 ./mvnw -pl agent-sandbox-e2b verify                                      # needs E2B_API_KEY
 ```
 
@@ -135,6 +138,17 @@ Pre-1.0 and versioned accordingly: the API may change between minor versions.
 `LocalSandbox` and `DockerSandbox` are exercised by the full TCK; `E2BSandbox` passes
 the same TCK against the live E2B service. `agent-sandbox-docker` requires Docker
 Engine with API version 1.44 or newer.
+
+The 0.10.0 dependency closure has three disclosed upstream findings in Apache
+HttpComponents classes embedded and relocated inside the Java Docker transport. The
+HTTP/2/HPACK condition is not reachable on the Docker HTTP/1.1 path examined; the other
+two require a malicious response from the trusted, root-equivalent local Docker daemon.
+No path from untrusted code inside a selected container to those advisory conditions was
+identified under this trust model. Published Testcontainers/docker-java combinations
+examined do not yet embed the fixed versions, and ordinary dependency overrides cannot
+replace relocated classes inside the zerodep JAR. The findings remain visible and are
+accepted for the trusted-local-daemon use case; changing the caller-selected image cannot
+remove them.
 
 **Breaking change in 0.10.0.** `DockerSandbox` no longer has a default image. The
 no-argument `DockerSandbox()` constructor is removed, and `builder()` now requires

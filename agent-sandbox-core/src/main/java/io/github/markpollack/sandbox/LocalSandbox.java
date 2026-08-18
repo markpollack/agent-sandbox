@@ -33,9 +33,9 @@ import org.zeroturnaround.exec.ProcessResult;
  * Sandbox implementation that executes commands directly on the host system.
  *
  * <p>
- * <strong>WARNING:</strong> This implementation provides NO isolation and should only be
- * used when Docker is not available. Commands executed through this sandbox can access
- * and modify the host system.
+ * <strong>WARNING:</strong> This implementation provides process and workspace
+ * convenience, but NO security isolation. Use it only for trusted commands. Commands
+ * executed through this sandbox can access and modify the host system.
  * </p>
  *
  * <p>

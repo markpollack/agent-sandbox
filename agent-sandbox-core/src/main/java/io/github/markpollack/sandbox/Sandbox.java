@@ -18,15 +18,18 @@ package io.github.markpollack.sandbox;
 import java.nio.file.Path;
 
 /**
- * Sandbox interface for executing commands in isolated environments.
+ * Shared synchronous command-execution and workspace-file interface.
  *
  * <p>
- * Provides secure execution of agent commands with proper isolation and resource
- * management. Implementations should ensure commands cannot affect the host system.
+ * Isolation is implementation-specific and is not guaranteed by this interface.
+ * {@link LocalSandbox} executes directly on the host and provides no security isolation.
+ * Callers must select a backend and additional controls appropriate to their threat
+ * model.
  * </p>
  *
  * <p>
- * Supported implementations: {@link LocalSandbox} (local process execution).
+ * The shared synchronous command and file contract is distinct from optional operations
+ * such as {@link #startInteractive(ExecSpec)}, which implementations may not support.
  * </p>
  *
  * <p>

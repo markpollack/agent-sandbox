@@ -35,8 +35,8 @@ import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
 /**
- * Sandbox implementation that executes commands in Docker containers for strong
- * isolation.
+ * Convenient local Docker backend that executes commands in a caller-selected
+ * container image.
  *
  * <p>
  * Supports {@link ExecSpecCustomizer}s for last-mile command and environment
@@ -57,8 +57,8 @@ import org.testcontainers.utility.DockerImageName;
  *
  * <p>
  * With that choice comes ownership: the image's provenance, contents, patching, and
- * vulnerability policy are the caller's. For production, prefer an immutable digest
- * over a mutable tag, and scan and attest the image you pick.
+ * vulnerability policy are the caller's. For reproducible operation, prefer an
+ * immutable digest over a mutable tag, and scan and attest the image you pick.
  * </p>
  *
  * <pre>{@code
@@ -82,8 +82,9 @@ import org.testcontainers.utility.DockerImageName;
  * <strong>Trust boundary.</strong> Reaching a Docker daemon is a privileged operation:
  * a caller who can start containers can generally obtain root-equivalent control of the
  * host. Container isolation alone is not a security guarantee against hostile code.
- * Treat this backend as workload separation, and add the kernel-, user-, and
- * network-level controls your threat model requires.
+ * This class is not a hardened multi-tenant execution service. Treat it as workload
+ * separation, and add the kernel-, user-, and network-level controls your threat model
+ * requires.
  * </p>
  *
  * <p>
@@ -266,7 +267,7 @@ public final class DockerSandbox implements Sandbox {
 			throw new IllegalArgumentException(
 					"A Docker image is required: DockerSandbox has no default image. Call "
 							+ "DockerSandbox.builder().image(\"<repository>[:tag|@sha256:...]\") or use a "
-							+ "constructor that takes an image. Prefer an immutable digest in production; "
+							+ "constructor that takes an image. Prefer an immutable digest for reproducible use; "
 							+ "the image must provide bash, GNU coreutils, and GNU findutils.");
 		}
 	}
@@ -374,7 +375,7 @@ public final class DockerSandbox implements Sandbox {
 		 * <p>
 		 * The caller selects and owns this image, including its provenance, contents,
 		 * patching, and vulnerability policy. Prefer an immutable digest
-		 * ({@code repo@sha256:...}) over a mutable tag in production.
+		 * ({@code repo@sha256:...}) over a mutable tag for reproducible operation.
 		 * </p>
 		 * @param image the Docker image reference
 		 * @return this builder
