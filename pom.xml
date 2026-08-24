@@ -370,41 +370,34 @@
                 </executions>
             </plugin>
 
-            <!--
-                One schema-1.6 JSON aggregate for the complete reactor. The execution is
-                root-only so child modules neither generate nor attach module BOMs. It runs
-                at verify because the upstream aggregate goal requires online mode; the
-                release deploy lifecycle regenerates and attaches this parent artifact
-                before publication.
-            -->
+            <!-- One consumer-scoped CycloneDX 1.6 JSON attachment per artifact. -->
             <plugin>
                 <groupId>org.cyclonedx</groupId>
                 <artifactId>cyclonedx-maven-plugin</artifactId>
                 <version>${cyclonedx-maven-plugin.version}</version>
-                <inherited>false</inherited>
                 <configuration>
                     <projectType>library</projectType>
                     <schemaVersion>1.6</schemaVersion>
                     <includeBomSerialNumber>true</includeBomSerialNumber>
                     <includeCompileScope>true</includeCompileScope>
-                    <includeProvidedScope>true</includeProvidedScope>
+                    <includeProvidedScope>false</includeProvidedScope>
                     <includeRuntimeScope>true</includeRuntimeScope>
-                    <includeSystemScope>true</includeSystemScope>
+                    <includeSystemScope>false</includeSystemScope>
                     <includeTestScope>false</includeTestScope>
                     <includeLicenseText>false</includeLicenseText>
                     <outputReactorProjects>false</outputReactorProjects>
                     <!-- Central Publishing replaces Maven's standard deploy path. -->
                     <skipNotDeployed>false</skipNotDeployed>
                     <outputFormat>json</outputFormat>
-                    <outputName>agent-sandbox-bom</outputName>
+                    <outputName>${project.artifactId}-${project.version}-cyclonedx</outputName>
                     <classifier>cyclonedx</classifier>
                 </configuration>
                 <executions>
                     <execution>
-                        <id>aggregate-cyclonedx-sbom</id>
+                        <id>consumer-cyclonedx-sbom</id>
                         <phase>verify</phase>
                         <goals>
-                            <goal>makeAggregateBom</goal>
+                            <goal>makeBom</goal>
                         </goals>
                     </execution>
                 </executions>

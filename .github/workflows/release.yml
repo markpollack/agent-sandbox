@@ -22,7 +22,7 @@ jobs:
       # The Docker and E2B suites gate themselves on infrastructure that is absent
       # in CI, so this runs the full reactor with the unit/TCK tests enabled.
       skip-tests: false
-      release-notes-file: RELEASE_NOTES_0.10.md
+      release-notes-file: RELEASE_NOTES_0.10.1.md
     secrets:
       MAVEN_USERNAME: ${{ secrets.MAVEN_USERNAME }}
       MAVEN_PASSWORD: ${{ secrets.MAVEN_PASSWORD }}
