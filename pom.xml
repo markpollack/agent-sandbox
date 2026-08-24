@@ -52,10 +52,10 @@
         <agent-sandbox.version>${project.version}</agent-sandbox.version>
 
         <!-- Core dependency versions -->
-        <slf4j.version>2.0.9</slf4j.version>
+        <slf4j.version>2.0.18</slf4j.version>
 
         <!-- Process execution -->
-        <zt-exec.version>1.12</zt-exec.version>
+        <zt-exec.version>1.13.0</zt-exec.version>
 
         <!-- Docker support. Keep at or above 1.21.x: the docker-java shipped with
              1.20.x negotiates Docker API 1.32, which Docker Engine 29 rejects
@@ -68,14 +68,14 @@
              and the jackson-core async number-length bypass GHSA-r7wm-3cxj-wff9. The
              2.21.4 and 2.21.5 fix lines are both below 2.21.6. This BOM import is
              exported to consumers, so the project governs the pin. -->
-        <jackson.version>2.21.6</jackson.version>
+        <jackson.version>2.22.2</jackson.version>
 
         <!-- Test dependency versions -->
-        <junit-jupiter.version>5.10.1</junit-jupiter.version>
-        <mockito.version>5.7.0</mockito.version>
-        <assertj.version>3.24.2</assertj.version>
-        <awaitility.version>4.2.0</awaitility.version>
-        <logback.version>1.5.15</logback.version>
+        <junit-jupiter.version>5.14.4</junit-jupiter.version>
+        <mockito.version>5.23.0</mockito.version>
+        <assertj.version>3.27.7</assertj.version>
+        <awaitility.version>4.3.0</awaitility.version>
+        <logback.version>1.6.3</logback.version>
 
         <!-- Plugin versions -->
         <maven-jar-plugin.version>3.3.0</maven-jar-plugin.version>
@@ -83,7 +83,7 @@
         <maven-javadoc-plugin.version>3.6.0</maven-javadoc-plugin.version>
         <maven-gpg-plugin.version>3.2.7</maven-gpg-plugin.version>
         <central-publishing-maven-plugin.version>0.10.0</central-publishing-maven-plugin.version>
-        <cyclonedx-maven-plugin.version>2.9.2</cyclonedx-maven-plugin.version>
+        <cyclonedx-maven-plugin.version>2.9.3</cyclonedx-maven-plugin.version>
         <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
     </properties>
 
