@@ -36,6 +36,14 @@
             <artifactId>commons-compress</artifactId>
         </dependency>
 
+        <!-- Export the maintained Jackson alignment to standalone consumers.
+             Reactor-only dependency management does not otherwise override the
+             older annotation version brought in by Testcontainers. -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+        </dependency>
+
         <!-- Slf4j API -->
         <dependency>
             <groupId>org.slf4j</groupId>
