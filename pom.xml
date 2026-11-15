@@ -66,9 +66,11 @@
         <!-- JSON processing. 2.21.2 carries eleven advisories, three HIGH: the
              PolymorphicTypeValidator bypasses CVE-2026-54512 / CVE-2026-54513 (CVSS 8.1)
              and the jackson-core async number-length bypass GHSA-r7wm-3cxj-wff9. The
-             2.21.4 and 2.21.5 fix lines are both below 2.21.6. This BOM import is
+             2.21.4 and 2.21.5 fix lines are both below 2.21.6. 2.22.2 carries a
+             jackson-core HIGH (CVSS 7.5) fixed in 2.22.3, the floor the AgentWorks
+             members (Client, Judge, Journal, SDK) align on. This BOM import is
              exported to consumers, so the project governs the pin. -->
-        <jackson.version>2.22.2</jackson.version>
+        <jackson.version>2.22.3</jackson.version>
 
         <!-- Test dependency versions -->
         <junit-jupiter.version>5.14.4</junit-jupiter.version>
